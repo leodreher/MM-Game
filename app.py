@@ -7,14 +7,14 @@ if 'trades' not in st.session_state:
 if 'bids' not in st.session_state:
     st.session_state.bids = []
 
-st.title("Market Maker Game 📈")
+st.title("Market Making Game 📈")
 
 # Sustainable Finance Context
 st.markdown("**Mystery Asset:** A leading offshore wind energy company.")
 st.markdown("*Hints:* Sector: Renewable Energy | Revenue: ~€12B | Shares: ~420M")
 st.divider()
 
-# 5 Tabs now
+# 5 Tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["1. Setup", "2. Bidding", "3. Market Maker", "4. Trading", "5. Resolution"])
 
 with tab1:
@@ -40,30 +40,34 @@ with tab2:
             
     if st.session_state.bids:
         st.write("### Current Bids (Sorted by narrowest):")
-        # Sort dataframe so smallest width is at the top
         df_bids = pd.DataFrame(st.session_state.bids).sort_values(by="Range Width", ascending=True).reset_index(drop=True)
         st.dataframe(df_bids, use_container_width=True)
         
         winner = df_bids.iloc[0]["Name"]
         winning_width = df_bids.iloc[0]["Range Width"]
-        st.info(f"🏆 Current Winner: **{winner}** with a width of **{winning_width}**!")
+        st.info(f"The Market Maker is: **{winner}** with a width of **{winning_width}**!")
+    else:
+        winner = ""
+        winning_width = 0.0
 
 with tab3:
     st.header("Set the Market")
-    st.markdown("The winning Market Maker now sets the exact bounds.")
-    
-    # Auto-fill the winner's name if there are bids
-    default_mm = winner if st.session_state.bids else ""
-    mm_name = st.text_input("Market Maker Name", value=default_mm)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        bid = st.number_input("Final Bid (Lower Bound)", value=0.0, step=1.0)
-    with col2:
-        ask = st.number_input("Final Ask (Upper Bound)", value=0.0, step=1.0)
+    if winner == "":
+        st.warning("Please submit at least one bid in Tab 2 first.")
+    else:
+        st.markdown(f"**{winner}** must now set the Bid. The Ask is calculated automatically to maintain the **{winning_width}** width.")
         
-    if ask - bid > 0:
-        st.caption(f"Current Spread: {ask - bid}")
+        mm_name = st.text_input("Market Maker Name", value=winner)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            bid = st.number_input("Bid (Lower Bound)", value=0.0, step=1.0)
+        with col2:
+            # Enforce the width by calculating Ask based on Bid + winning_width
+            ask = bid + winning_width
+            st.number_input("Ask (Upper Bound)", value=ask, disabled=True)
+            
+        st.success(f"Market established: **{bid}** (Bid) / **{ask}** (Ask)")
 
 with tab4:
     st.header("Traders")
@@ -88,25 +92,31 @@ with tab5:
         mm_profit = 0
         results = []
 
+        # We use the bid/ask from the current state of Tab 3
+        # Since Tab 3 UI elements define 'bid' and 'ask' locally, 
+        # we need to ensure they are calculated here too.
+        current_bid = bid
+        current_ask = ask
+
         for trade in st.session_state.trades:
             trader_profit = 0
             is_buyer = "Buy" in trade["Action"]
 
-            if true_price > ask:  # Buyers win
+            if true_price > current_ask:  # Buyers win
                 if is_buyer:
-                    trader_profit = true_price - ask
+                    trader_profit = true_price - current_ask
                     mm_profit -= trader_profit
-            elif true_price < bid:  # Sellers win
+            elif true_price < current_bid:  # Sellers win
                 if not is_buyer:
-                    trader_profit = bid - true_price
+                    trader_profit = current_bid - true_price
                     mm_profit -= trader_profit
             else:  # Market Maker Wins (Bid <= Price <= Ask)
                 if is_buyer:
-                    trader_loss = ask - true_price
+                    trader_loss = current_ask - true_price
                     mm_profit += trader_loss
                     trader_profit = -trader_loss
                 else:
-                    trader_loss = true_price - bid
+                    trader_loss = true_price - current_bid
                     mm_profit += trader_loss
                     trader_profit = -trader_loss
 
