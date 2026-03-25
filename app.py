@@ -17,7 +17,7 @@ if 'hint2' not in st.session_state:
 if 'hint3' not in st.session_state:
     st.session_state.hint3 = ""
 
-# Context
+# Hints to be displayed on all tabs except the first one
 all_hints = " | ".join([h for h in [st.session_state.hint1, st.session_state.hint2, st.session_state.hint3] if h.strip()])
 if all_hints:
     st.markdown(f"*Hints:* {all_hints}")
@@ -30,6 +30,7 @@ if 'selected_tab' not in st.session_state:
 sel = st.radio("Go to tab", steps, index=st.session_state.selected_tab, horizontal=True)
 st.session_state.selected_tab = steps.index(sel)
 
+# Tabs content
 if st.session_state.selected_tab == 0:
     st.header("Instructor Setup")
     st.session_state.true_price = st.number_input("Enter the True Price (Keep hidden!)", value=st.session_state.get("true_price", 0.0), step=1.0)
@@ -124,7 +125,7 @@ elif st.session_state.selected_tab == 4:
             df = pd.DataFrame(results)
             
             def color_pnl(val):
-                color = '#28a745' if val > 0 else '#dc3545' if val < 0 else ''
+                color = 'green' if val > 0 else 'red' if val < 0 else ''
                 return f'color: {color}'
                 
             styled_df = df.style.map(color_pnl, subset=['P&L']).format({'P&L': '{:.2f}'})
