@@ -94,7 +94,7 @@ elif st.session_state.selected_tab == 4:
     st.header("Resolve the Market")
     if st.button("Reveal Price & Calculate Payouts", type="primary"):
         st.subheader(f"The True Price is: **${st.session_state.get('true_price', 0.0)}**")
-        st.write(f"Final Market Maker Range: Bid = ${st.session_state.get('bid', 0.0)}, Ask = ${st.session_state.get('ask', 0.0)}")
+        st.write(f"Spread: Bid = ${st.session_state.get('bid', 0.0)}, Ask = ${st.session_state.get('ask', 0.0)}")
         mm_profit = 0
         results = []
         current_bid = st.session_state.get("bid", 0.0)
@@ -123,8 +123,10 @@ col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
     if st.button("Previous"):
         st.session_state.selected_tab = max(0, st.session_state.selected_tab - 1)
+        st.rerun()
 with col2:
     st.write(f"**Current tab:** {steps[st.session_state.selected_tab]}")
 with col3:
     if st.button("Next"):
         st.session_state.selected_tab = min(len(steps) - 1, st.session_state.selected_tab + 1)
+        st.rerun()
