@@ -17,7 +17,7 @@ if 'hint2' not in st.session_state:
 if 'hint3' not in st.session_state:
     st.session_state.hint3 = ""
 
-# Sustainable Finance Context
+# Context
 all_hints = " | ".join([h for h in [st.session_state.hint1, st.session_state.hint2, st.session_state.hint3] if h.strip()])
 if all_hints:
     st.markdown(f"*Hints:* {all_hints}")
@@ -100,25 +100,15 @@ elif st.session_state.selected_tab == 4:
         current_ask = st.session_state.get("ask", 0.0)
         mm_name = st.session_state.get("mm_name", "Market Maker")
         for trade in st.session_state.trades:
-            trader_profit = 0
             is_buyer = "Buy" in trade["Action"]
-            if st.session_state.get('true_price', 0.0) > current_ask:
-                if is_buyer:
-                    trader_profit = st.session_state['true_price'] - current_ask
-                    mm_profit -= trader_profit
-            elif st.session_state.get('true_price', 0.0) < current_bid:
-                if not is_buyer:
-                    trader_profit = current_bid - st.session_state['true_price']
-                    mm_profit -= trader_profit
+            true_price = st.session_state.get('true_price', 0.0)
+
+            if is_buyer:
+                trader_profit = true_price - current_ask
             else:
-                if is_buyer:
-                    trader_loss = current_ask - st.session_state['true_price']
-                    mm_profit += trader_loss
-                    trader_profit = -trader_loss
-                else:
-                    trader_loss = st.session_state['true_price'] - current_bid
-                    mm_profit += trader_loss
-                    trader_profit = -trader_loss
+                trader_profit = current_bid - true_price
+
+            mm_profit -= trader_profit
             results.append({"Trader": trade["Name"], "Action": trade["Action"], "P&L": trader_profit})
         st.divider()
         st.write(f"### Market Maker ({mm_name}) Total P&L: **${mm_profit:.2f}**")
@@ -137,5 +127,3 @@ with col2:
 with col3:
     if st.button("Next"):
         st.session_state.selected_tab = min(len(steps) - 1, st.session_state.selected_tab + 1)
-
-
