@@ -22,7 +22,7 @@ all_hints = " | ".join([h for h in [st.session_state.hint1, st.session_state.hin
 if all_hints:
     st.markdown(f"*Hints:* {all_hints}")
 else:
-    st.markdown("*Hints:* (Enter sector, revenue, and outstanding shares on Tab 1)")
+    st.markdown("*Hints:* (Enter hints on Tab 1)")
 steps = ["1. Setup (Keep hidden!)", "2. Bidding", "3. Market Maker", "4. Trading", "5. Resolution"]
 if 'selected_tab' not in st.session_state:
     st.session_state.selected_tab = 0
@@ -32,11 +32,11 @@ st.session_state.selected_tab = steps.index(sel)
 
 if st.session_state.selected_tab == 0:
     st.header("Instructor Setup")
-    st.session_state.true_price = st.number_input("Enter the True Stock Price (Keep hidden!)", value=st.session_state.get("true_price", 0.0), step=1.0)
+    st.session_state.true_price = st.number_input("Enter the True Price (Keep hidden!)", value=st.session_state.get("true_price", 0.0), step=1.0)
     st.subheader("Mystery Asset Hints")
-    st.session_state.hint1 = st.text_input("Sector", value=st.session_state.hint1, placeholder="e.g. Renewable Energy")
-    st.session_state.hint2 = st.text_input("Revenue", value=st.session_state.hint2, placeholder="e.g. ~€12B")
-    st.session_state.hint3 = st.text_input("Outstanding Shares", value=st.session_state.hint3, placeholder="e.g. ~420M")
+    st.session_state.hint1 = st.text_input("Hint 1", value=st.session_state.hint1, placeholder="e.g. Sector")
+    st.session_state.hint2 = st.text_input("Hint 2", value=st.session_state.hint2, placeholder="e.g. Annual Revenue")
+    st.session_state.hint3 = st.text_input("Hint 3", value=st.session_state.hint3, placeholder="e.g. # of Shares")
 
 elif st.session_state.selected_tab == 1:
     st.header("Compete for Market Maker")
@@ -93,8 +93,8 @@ elif st.session_state.selected_tab == 3:
 elif st.session_state.selected_tab == 4:
     st.header("Resolve the Market")
     if st.button("Reveal Price & Calculate Payouts", type="primary"):
-        st.subheader(f"The True Price is: **${st.session_state.get('true_price', 0.0)}**")
-        st.write(f"Spread: Bid = ${st.session_state.get('bid', 0.0)}, Ask = ${st.session_state.get('ask', 0.0)}")
+        st.subheader(f"The True Price is: **{st.session_state.get('true_price', 0.0)}**")
+        st.write(f"Spread: Bid = {st.session_state.get('bid', 0.0)}, Ask = {st.session_state.get('ask', 0.0)}")
         mm_profit = 0
         results = []
         current_bid = st.session_state.get("bid", 0.0)
@@ -112,13 +112,27 @@ elif st.session_state.selected_tab == 4:
             mm_profit -= trader_profit
             results.append({"Trader": trade["Name"], "Action": trade["Action"], "P&L": trader_profit})
         st.divider()
-        st.write(f"### Market Maker ({mm_name}) Total P&L: **${mm_profit:.2f}**")
+        mm_name = st.session_state.get('mm_name', 'Market Maker')
+        if mm_profit > 0:
+            st.markdown(f"### Market Maker ({mm_name}) Total P&L: :green[**{mm_profit:.2f}**]")
+        elif mm_profit < 0:
+            st.markdown(f"### Market Maker ({mm_name}) Total P&L: :red[**{mm_profit:.2f}**]")
+        else:
+            st.markdown(f"### Market Maker ({mm_name}) Total P&L: **{mm_profit:.2f}**")
         st.write("### Trader Results:")
         if results:
-            st.dataframe(pd.DataFrame(results), use_container_width=True)
+            df = pd.DataFrame(results)
+            
+            def color_pnl(val):
+                color = '#28a745' if val > 0 else '#dc3545' if val < 0 else ''
+                return f'color: {color}'
+                
+            styled_df = df.style.map(color_pnl, subset=['P&L']).format({'P&L': '{:.2f}'})
+            st.dataframe(styled_df, use_container_width=True)
         else:
             st.write("No trades were placed.")
 
+#add navigation buttons at the bottom of the page
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
     if st.button("Previous"):
