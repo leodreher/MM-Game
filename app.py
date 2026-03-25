@@ -41,7 +41,7 @@ if st.session_state.selected_tab == 0:
 elif st.session_state.selected_tab == 1:
     st.header("Compete for Market Maker")
     st.markdown("Students offer narrower and narrower range widths. Smallest width wins!")
-    with st.form("bidding_form", clear_on_submit=True):
+    with st.form("bidding_form", clear_on_submit=True, enter_to_submit=False):
         col1, col2 = st.columns(2)
         with col1:
             bidder_name = st.text_input("Participant Name")
